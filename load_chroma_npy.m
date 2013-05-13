@@ -1,4 +1,4 @@
-function [Chroma,Times] = load_chroma_npy(Track)
+function [Chroma,Times] = load_chroma_npy(Track, params)
 % [Chroma,Times] = load_chroma(Track)
 %     Read in features for data items defined by a track ID string Track.
 %     Chroma returns the 12xN matrix of chroma features, one per beat.
@@ -6,12 +6,24 @@ function [Chroma,Times] = load_chroma_npy(Track)
 %     Now with semisoff.
 % 2010-04-07 Dan Ellis dpwe@ee.columbia.edu after loadftrs_mirex.m
 
-global parm
+if nargin < 2
+  parms.empty = [];
+end
 
 % Should we try to append 100Hz-centered "bass" chroma?
-use100 = 0;
+if isfield(params, 'use100') == 0
+  params.use100 = 0;
+end
 
-rawsemis = 1;
+% Just return the raw semitone-spectrum data?
+if isfield(params, 'rawsemis') == 0
+  params.rawsemis = 1;
+end
+
+% Adaptive tuning?
+if isfield(params, 'semisoff') == 0
+  params.semisoff = [];  % adaptive
+end
 
 % Read the beat times
 Times = npyread(['npys/', Track,'-beats.npy']);
@@ -19,8 +31,10 @@ Times = npyread(['npys/', Track,'-beats.npy']);
 % Read the features
 Data = npyread(['npys/', Track,'-CL.npy']);
 
-if rawsemis
+if params.rawsemis
+  % If you don't do LDA, you have to reduce dimensions here
   %Chroma = Data(72+[1:120],:);
+  % But if you're using LDA, better to keep it all
   Chroma = Data;
   Chroma = Chroma.^.25;
   %MaxVals = max(Chroma)+0.00001;
@@ -31,11 +45,14 @@ else
   % Make chroma for CL features
   
   % Adapting tuning - find which eighth-tone has the most peaks
-  [vv,xx] = max(Data);
-  semisoff = 0.9 - (mean(mod(xx+1,4)) - 1.5);
-
-  % Or use this for fixed tuning
-  %semisoff = 1.5;
+  if length(params.semisoff) == 0
+    [vv,xx] = max(Data);
+    semisoff = 0.9 - (mean(mod(xx+1,4)) - 1.5);
+  else
+    semisoff = params.semisoff + 1.5;
+    % Or use this for fixed tuning
+    %semisoff = 1.5;
+  end
 
   % Build a mapping matrix to project 192 eighth-tone bins to 12 chroma
   MM = zeros(12,192);
@@ -56,7 +73,7 @@ else
   
   Chroma = MM*Data;
 
-  if use100
+  if params.use100
 
     % Append bass-weighted chroma vector
     wts2 = exp(-0.5 * (([0:191]-12)/24).^2);
@@ -67,7 +84,7 @@ else
     %wts2(1) = 2*wts2(1);
 
     MMw = MM*diag(wts2);
-    MMw = MMw.*repmat(sum(MMw,2),1,size(MMw,2));
+    %MMw = MMw.*repmat(sum(MMw,2),1,size(MMw,2));
 
     Chroma = [Chroma;MMw*diag(wts2)*Data];
 

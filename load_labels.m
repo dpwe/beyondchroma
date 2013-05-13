@@ -1,15 +1,18 @@
-function [Labels,Times] = load_labels(Track, usenpy)
-% [Chroma,Times] = load_labels(Track)
+function [Labels,Times] = load_labels(Track, params)
+% [Chroma,Times] = load_labels(Track, params)
 %     Read in labels for data items defined by a track ID string Track.
 %     Labels returns an N-element vector of integer labels (0..24)
 %     for each beat.
 %     Times returns the start times of each beat.
 % 2010-04-07 Dan Ellis dpwe@ee.columbia.edu after loadftrs_mirex.m
 
-%usenpy = 1;
+if nargin < 2
+  %use_npy = 1;
+  params.use_npy = 1;
+end
 
 % Common filename prefix
-if usenpy
+if params.use_npy
   fn = fullfile('mattlabs', Track);
 else
   fn = fullfile('data','labels', Track);
@@ -27,7 +30,7 @@ elseif exist([fn,'.lab'])
   ruleset = 0; % labels 0..24
   [ts,ll] = readharte([fn,'.lab'], ruleset);
   % get beats
-  if usenpy
+  if params.use_npy
     bfname = fullfile('npys',[Track,'-beats.npy']);
     bts = npyread(bfname);
   else
