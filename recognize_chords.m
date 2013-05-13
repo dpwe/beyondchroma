@@ -19,6 +19,10 @@ end
 
 % Evaluate viterbi path
 Labels = viterbi_path(Priors,Transitions,Liks);
+
+% Or just take largest likelihood in each time, with no smoothing
+%[vv,Labels] = max(Liks);
+
 % Make the labels be 0..24 
 Labels = Labels - 1;
 

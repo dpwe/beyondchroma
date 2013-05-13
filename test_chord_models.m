@@ -1,10 +1,11 @@
-function [S,C] = test_chord_models(TestFileList, Models, Transitions, Priors, use_npy)
-% [S,C] = test_chord_models(TestFileList, Models, Transitions, Priors)
+function [S,C] = test_chord_models(TestFileList, Models, Transitions, Priors, WLDA, use_npy)
+% [S,C] = test_chord_models(TestFileList, Models, Transitions, WLDA, Priors)
 %     Test chord recognizer on multiple tracks
 %     TestFileList is a cell array containing track ID strings for
 %     the test file.
 %     Models, Transitions, Priors define the chord recognition HMM
 %     from train_chord_models.
+%     WLDA is optional LDA mapping matrix to apply to features (or []).
 %     S returns as the overall accuracy (between 0 and 1); 
 %     C returns a confusion matrix (e.g. 25 x 25)
 % 2010-04-07 Dan Ellis dpwe@ee.columbia.edu after score_chord_id.m
@@ -14,6 +15,12 @@ nchroma = 12;
 nlabels = 2 * nchroma + 1;
 NOCHORD = 0;
 
+if length(WLDA) > 0
+  use_lda = 1;
+else
+  use_lda = 0;
+end
+
 % Initialize confusion matrix
 C = zeros(nlabels, nlabels);
 
@@ -22,6 +29,9 @@ nTestFiles = length(TestFileList);
 nframes = 0;
 for i = 1:nTestFiles
   Chroma = load_chroma(TestFileList{i}, use_npy);
+  if use_lda
+    Chroma = WLDA * Chroma;
+  end
   TrueLabels = load_labels(TestFileList{i}, use_npy);
   HypLabels = recognize_chords(Chroma, Models, Transitions, Priors);
   [s,c] = score_chord_recognition(HypLabels, TrueLabels);

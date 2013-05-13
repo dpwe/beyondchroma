@@ -1,11 +1,14 @@
-function [Models, Transitions, Priors] = train_chord_models(TrainFileList, use_npy)
-% [Models, Transitions, Priors] = train_chord_models(TrainFileList)
+function [Models, Transitions, Priors, WLDA] = train_chord_models(TrainFileList, use_npy, lda_size)
+% [Models, Transitions, Priors, WLDA] = train_chord_models(TrainFileList, use_npy, lda_size)
 %     Train single-Gaussian models of chords by loading the Chroma
 %     features and the corresponding chord label data from each of
 %     the items named in the TrainFileList cell array.  Return
 %     Models as an array of Gaussian models (e.g. Models(i).mean
 %     and Models(i).sigma as the covariance), and a transition
 %     matrix in Transitions. 
+%     use_npy means to use the CL npy data files.
+%     lda_size is the number of LDA dimensions to compress to (0 =
+%     don't use LDA).
 % 2010-04-07 Dan Ellis dpwe@ee.columbia.edu  after extractFeaturesAndTrain.m
 
 % load training data
@@ -19,9 +22,19 @@ for i = 1:nTrainFiles
   Features = [Features, F];
   Labels = [Labels, L];
 end
-  
+
 disp(['training data: ',num2str(length(Features)),' frames']);
 
+use_lda = (lda_size > 0);
+
+if use_lda
+  [WLDA,Y] = dpwe_lda(Features', Labels', lda_size);
+  WLDA = WLDA';
+  Features = WLDA*Features;
+else
+  WLDA = [];
+end
+  
 nchrom = 12;
 NOCHORD = 0;
 
