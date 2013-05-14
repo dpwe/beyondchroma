@@ -12,7 +12,7 @@ Use with Colin's npys/ directory, and Matt's chordlabs organized by album in mat
     >> [Models,Transitions,Priors,WLDA] = train_chord_models(TrainFileList,params);
     training data: 48113 frames
     >> TestFileList = listfileread('testfilelist.txt');
-    >> [S,C] = test_chord_models(TestFileList,Models,Transitions,Priors,WLDA,1);
+    >> [S,C] = test_chord_models(TestFileList,Models,Transitions,Priors,WLDA,params);
     testing data: 11683 frames
     Overall recognition accuracy = 82.2%
     >>
